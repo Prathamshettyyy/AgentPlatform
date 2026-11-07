@@ -1,0 +1,156 @@
+{
+  "status": "success",
+  "started_at": "2026-11-07T06:21:13.495943+00:00",
+  "completed_at": "2026-11-07T06:21:15.780127+00:00",
+  "source_database": {
+    "path": "C:\\Users\\PrathamRShetty\\Documents\\agent_platform\\agent_platform.db",
+    "size_bytes": 66289664,
+    "integrity_check": "ok"
+  },
+  "destination_database": {
+    "path": "C:\\Users\\PrathamRShetty\\Documents\\agent_platform\\geostrata.db",
+    "size_bytes": 55201792,
+    "integrity_check": "ok",
+    "foreign_key_check": "ok"
+  },
+  "backup_database": {
+    "path": "C:\\Users\\PrathamRShetty\\Documents\\agent_platform\\agent_platform.db.bak_phase2b",
+    "size_bytes": 66289664,
+    "integrity_check": "ok"
+  },
+  "total_tables_migrated": 13,
+  "total_rows_migrated": 5031,
+  "reconciliation": {
+    "documents": {
+      "source_rows": 42,
+      "dest_rows": 42,
+      "row_count_match": true,
+      "pk_cols": [
+        "document_id"
+      ],
+      "pk_count_match": true,
+      "pk_set_identical": true
+    },
+    "document_pages": {
+      "source_rows": 357,
+      "dest_rows": 357,
+      "row_count_match": true,
+      "pk_cols": [
+        "document_id",
+        "page_index"
+      ],
+      "pk_count_match": true,
+      "pk_set_identical": true
+    },
+    "document_tables": {
+      "source_rows": 360,
+      "dest_rows": 360,
+      "row_count_match": true,
+      "pk_cols": [
+        "table_id"
+      ],
+      "pk_count_match": true,
+      "pk_set_identical": true
+    },
+    "document_evidence": {
+      "source_rows": 3705,
+      "dest_rows": 3705,
+      "row_count_match": true,
+      "pk_cols": [
+        "evidence_id"
+      ],
+      "pk_count_match": true,
+      "pk_set_identical": true
+    },
+    "document_visual_evidence": {
+      "source_rows": 13,
+      "dest_rows": 13,
+      "row_count_match": true,
+      "pk_cols": [
+        "visual_evidence_id"
+      ],
+      "pk_count_match": true,
+      "pk_set_identical": true
+    },
+    "document_visual_disagreements": {
+      "source_rows": 0,
+      "dest_rows": 0,
+      "row_count_match": true,
+      "pk_cols": [
+        "disagreement_id"
+      ],
+      "pk_count_match": true,
+      "pk_set_identical": true
+    },
+    "document_project_associations": {
+      "source_rows": 58,
+      "dest_rows": 58,
+      "row_count_match": true,
+      "pk_cols": [
+        "association_id"
+      ],
+      "pk_count_match": true,
+      "pk_set_identical": true
+    },
+    "geotechnical_analysis_reports": {
+      "source_rows": 134,
+      "dest_rows": 134,
+      "row_count_match": true,
+      "pk_cols": [
+        "report_id"
+      ],
+      "pk_count_match": true,
+      "pk_set_identical": true
+    },
+    "geotechnical_analysis_reviews": {
+      "source_rows": 1,
+      "dest_rows": 1,
+      "row_count_match": true,
+      "pk_cols": [
+        "review_id"
+      ],
+      "pk_count_match": true,
+      "pk_set_identical": true
+    },
+    "foundation_research_reports": {
+      "source_rows": 101,
+      "dest_rows": 101,
+      "row_count_match": true,
+      "pk_cols": [
+        "report_id"
+      ],
+      "pk_count_match": true,
+      "pk_set_identical": true
+    },
+    "vendor_requirement_reports": {
+      "source_rows": 222,
+      "dest_rows": 222,
+      "row_count_match": true,
+      "pk_cols": [
+        "report_id"
+      ],
+      "pk_count_match": true,
+      "pk_set_identical": true
+    },
+    "vendor_requirement_reviews": {
+      "source_rows": 37,
+      "dest_rows": 37,
+      "row_count_match": true,
+      "pk_cols": [
+        "review_id"
+      ],
+      "pk_count_match": true,
+      "pk_set_identical": true
+    },
+    "project_workflows": {
+      "source_rows": 1,
+      "dest_rows": 1,
+      "row_count_match": true,
+      "pk_cols": [
+        "workflow_id"
+      ],
+      "pk_count_match": true,
+      "pk_set_identical": true
+    }
+  }
+}

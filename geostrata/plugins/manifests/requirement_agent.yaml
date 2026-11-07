@@ -1,0 +1,112 @@
+id: requirement_agent
+name: Vendor Requirement Agent
+version: 1.0.0
+description: Consumes the outputs of the Geotechnical Analysis Agent and Foundation Research Agent to generate a structured, traceable 12-Section Vendor Foundation Requirement Document for foundation procurement and engineering review.
+capabilities:
+  - vendor_requirements
+  - langgraph_workflow
+  - multi_document_intelligence
+  - provenance_traceability
+adapter_type: python_callable
+entrypoint: geostrata.plugins.requirement_agent.adapter:run
+enabled: true
+input_schema:
+  type: object
+  properties:
+    project_id:
+      type: string
+      description: Project identifier
+      default: default
+    geotechnical_report_id:
+      type: string
+      description: Exact ID of the upstream Geotechnical Analysis Report
+    foundation_research_report_id:
+      type: string
+      description: Exact ID of the upstream Foundation Research Report
+    confirmed_document_ids:
+      type: array
+      items:
+        type: string
+      description: Confirmed project document UUIDs
+    document_id:
+      type: string
+      description: Primary geotechnical soil report document UUID
+    snapshot_id:
+      type: string
+      description: Project document snapshot ID
+    document_versions:
+      type: object
+      description: Map of document_id to SHA-256 hash version
+    llm_profile:
+      type: string
+      description: Model profile defined in config/llm_profiles.yaml
+      default: document_analysis
+  required:
+    - project_id
+    - geotechnical_report_id
+    - foundation_research_report_id
+output_schema:
+  type: object
+  properties:
+    report_id:
+      type: string
+    project_id:
+      type: string
+    document_id:
+      type: string
+    geotechnical_report_id:
+      type: string
+    foundation_research_report_id:
+      type: string
+    confirmed_document_ids:
+      type: array
+      items:
+        type: string
+    snapshot_id:
+      type: string
+    status:
+      type: string
+    execution_status:
+      type: string
+    review_status:
+      type: string
+    is_preliminary_draft:
+      type: boolean
+    suitable_for_contractual_issuance:
+      type: boolean
+    section_1_project_overview:
+      type: object
+    section_2_geotechnical_conditions:
+      type: object
+    section_3_foundation_systems:
+      type: array
+    section_4_vendor_scope_of_work:
+      type: array
+    section_5_technical_requirements:
+      type: array
+    section_6_quality_and_documentation:
+      type: array
+    section_7_vendor_proposal_requirements:
+      type: array
+    section_8_risks_and_precautions:
+      type: array
+    section_9_missing_information:
+      type: array
+    section_10_vendor_response_checklist:
+      type: array
+    section_11_references_and_evidence:
+      type: array
+    section_12_limitations_and_approval:
+      type: object
+    provenance_summary:
+      type: object
+    markdown_content:
+      type: string
+execution:
+  allowed_tools: []
+  permissions:
+    - documents.read
+    - analysis.read
+    - research.read
+    - requirements.write
+

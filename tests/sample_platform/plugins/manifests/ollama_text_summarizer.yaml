@@ -1,0 +1,21 @@
+id: ollama_text_summarizer
+name: Ollama Text Summarizer
+version: "1.0.0"
+description: Summarizes supplied text or email content with a local Ollama model.
+capabilities: [llm, text_summarization, email_summarization]
+adapter_type: python_callable
+entrypoint: plugins.examples.ollama_text_summarizer.agent:run
+enabled: true
+input_schema:
+  type: object
+  properties:
+    text: {type: string}
+    content: {type: string}
+    emails: {type: array}
+output_schema:
+  type: object
+  properties:
+    summary: {type: string}
+    model: {type: string}
+    source_length: {type: integer}
+

@@ -1,0 +1,1 @@
+"""Foundation Research Agent Plugin."""

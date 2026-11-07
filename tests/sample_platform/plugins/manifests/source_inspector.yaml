@@ -1,0 +1,23 @@
+id: source_inspector
+name: Deterministic Source Inspector
+version: "1.0.0"
+description: Parses a Python snippet and reports safe structural facts without executing it.
+capabilities: [source_inspection, static_analysis]
+adapter_type: python_callable
+entrypoint: plugins.examples.code_review.source_inspector:run
+enabled: true
+input_schema:
+  type: object
+  required: [source_code]
+  properties:
+    source_code: {type: string}
+output_schema:
+  type: object
+  required: [language, line_count, function_names, imports, dangerous_constructs, parse_ok]
+  properties:
+    language: {type: string}
+    line_count: {type: integer}
+    function_names: {type: array, items: {type: string}}
+    imports: {type: array, items: {type: string}}
+    dangerous_constructs: {type: array}
+    parse_ok: {type: boolean}

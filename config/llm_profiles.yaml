@@ -1,0 +1,127 @@
+# ==============================================================================
+# Model-Agnostic LLM Profiles Configuration
+#
+# Logical profile names map to specific providers, models, parameters, and fallbacks.
+# Agents request a profile (e.g. `document_analysis`) without hardcoding model names.
+#
+# Credentials: Never put API keys here directly.
+# Use `api_key_env` to reference environment variable names.
+# ==============================================================================
+
+llm_profiles:
+  # General default profile for agents that don't specify a profile
+  default:
+    provider: ollama
+    model: qwen3.5:4b
+    api_base: http://localhost:11434
+    timeout_seconds: 90.0
+    temperature: 0.7
+    max_tokens: 2048
+    capabilities:
+      text: true
+      structured_output: true
+      streaming: true
+      tool_calling: true
+    fallback:
+      enabled: true
+      models:
+        - provider: ollama
+          model: llama3.2
+          api_base: http://localhost:11434
+          timeout_seconds: 90.0
+        - provider: gemini
+          model: gemini-1.5-flash
+          api_key_env: GEMINI_API_KEY
+          timeout_seconds: 30.0
+          timeout_seconds: 30.0
+
+  # Specific profile for document and text analysis agents
+  document_analysis:
+    provider: ollama
+    model: qwen3.5:4b
+    api_base: http://localhost:11434
+    timeout_seconds: 90.0
+    temperature: 0.2
+    max_tokens: 4096
+    capabilities:
+      text: true
+      structured_output: true
+      streaming: true
+    fallback:
+      enabled: true
+      models:
+        - provider: ollama
+          model: llama3.2
+          api_base: http://localhost:11434
+          timeout_seconds: 90.0
+        - provider: gemini
+          model: gemini-1.5-flash
+          api_key_env: GEMINI_API_KEY
+          timeout_seconds: 45.0
+
+  # Specific profile for research and deep extraction agents
+  foundation_research:
+    provider: ollama
+    model: qwen3.5:4b
+    api_base: http://localhost:11434
+    timeout_seconds: 120.0
+    temperature: 0.4
+    max_tokens: 4096
+    capabilities:
+      text: true
+      structured_output: true
+      streaming: true
+    fallback:
+      enabled: true
+      models:
+        - provider: gemini
+          model: gemini-1.5-pro
+          api_key_env: GEMINI_API_KEY
+          timeout_seconds: 90.0
+
+  # Specific profile for requirement and specification generation
+  requirement_generation:
+    provider: ollama
+    model: qwen3.5:4b
+    api_base: http://localhost:11434
+    timeout_seconds: 90.0
+    temperature: 0.3
+    max_tokens: 4096
+    capabilities:
+      text: true
+      structured_output: true
+      streaming: true
+    fallback:
+      enabled: true
+      models:
+        - provider: ollama
+          model: llama3.2
+          api_base: http://localhost:11434
+          timeout_seconds: 90.0
+
+  # Specific profile for multimodal PDF and engineering drawing vision analysis
+  document_vision:
+    provider: ollama
+    model: qwen3-vl:2b
+    api_base: http://127.0.0.1:11434
+    timeout_seconds: 15.0
+    temperature: 0.1
+    max_tokens: 4096
+    capabilities:
+      text: true
+      image: true
+      structured_output: true
+      streaming: false
+    fallback:
+      enabled: true
+      models:
+        - provider: ollama
+          model: granite3.2-vision:2b
+          api_base: http://127.0.0.1:11434
+          timeout_seconds: 15.0
+        - provider: gemini
+          model: gemini-1.5-flash
+          api_key_env: GEMINI_API_KEY
+          timeout_seconds: 30.0
+
+

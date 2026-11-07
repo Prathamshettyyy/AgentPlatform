@@ -1,0 +1,16 @@
+id: ollama_summary_reply
+version: "1.0.0"
+nodes:
+  - id: summarize_with_ollama
+    type: agent
+    agent_id: ollama_text_summarizer
+    input_mappings:
+      text: {path: workflow_input.text}
+  - id: draft_reply
+    type: agent
+    agent_id: email_reply_writer
+    input_mappings:
+      email_summary: {path: node_outputs.summarize_with_ollama.summary}
+edges:
+  - {from: summarize_with_ollama, to: draft_reply}
+

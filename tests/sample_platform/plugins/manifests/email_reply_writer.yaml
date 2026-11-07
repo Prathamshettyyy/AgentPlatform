@@ -1,0 +1,11 @@
+id: email_reply_writer
+name: Email Reply Drafter
+version: "1.0.0"
+description: Drafts a mock reply.
+capabilities: [email_reply_drafting]
+adapter_type: python_callable
+entrypoint: plugins.examples.email_reply_writer.agent:run
+enabled: true
+input_schema: {type: object}
+output_schema: {type: object}
+

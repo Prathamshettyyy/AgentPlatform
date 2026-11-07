@@ -1,0 +1,27 @@
+id: email_assistant
+version: "1.0.0"
+nodes:
+  - id: summarize
+    type: agent
+    agent_id: email_summarizer
+    input_mappings:
+      use_tools: {literal: true}
+      query: {literal: inbox}
+  - id: draft_reply
+    type: agent
+    agent_id: email_reply_writer
+    input_mappings:
+      email_summary: {path: node_outputs.summarize.summary}
+  - id: approve_reply
+    type: human_approval
+    approval_payload_path: node_outputs.draft_reply
+  - id: send_reply
+    type: agent
+    agent_id: mock_sender
+    input_mappings:
+      draft: {path: node_outputs.draft_reply.draft}
+edges:
+  - {from: summarize, to: draft_reply}
+  - {from: draft_reply, to: approve_reply}
+  - {from: approve_reply, to: send_reply}
+

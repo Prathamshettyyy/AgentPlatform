@@ -1,0 +1,269 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-950 text-slate-100 min-h-screen;
+  }
+}
+
+/* Custom subtle scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.6);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(71, 85, 105, 0.6);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.8);
+}
+
+/* ==============================================================================
+   PRINT & PDF EXPORT STYLES
+   Ensures clean, professional RFQ document export without web chrome or URLs.
+   ============================================================================== */
+@media print {
+  @page {
+    size: letter portrait;
+    margin: 12mm 12mm 12mm 12mm;
+  }
+
+  /* Reset background, typography, and text colors to clean paper engineering specification palette */
+  html,
+  body,
+  #root,
+  #root > div,
+  main {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    position: static !important;
+    float: none !important;
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-family: Arial, Calibri, Aptos, "Segoe UI", sans-serif !important;
+    font-size: 8.5pt !important;
+    line-height: 1.35 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Eliminate any dark backgrounds from portal containers bleeding into print margins */
+  *,
+  *::before,
+  *::after,
+  [class*="bg-slate-9"],
+  [class*="bg-slate-8"],
+  [class*="bg-amber-950"],
+  [class*="bg-slate-950"],
+  [class*="bg-slate-900"] {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Target dedicated print document specifically */
+  .rfq-print-document {
+    display: block !important;
+    font-family: Arial, Calibri, Aptos, "Segoe UI", sans-serif !important;
+    color: #0f172a !important;
+    background: #ffffff !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+
+  .rfq-print-document * {
+    font-family: Arial, Calibri, Aptos, "Segoe UI", sans-serif !important;
+  }
+
+  /* Section containers flow naturally across pages; no artificial page pushes */
+  .rfq-print-section {
+    display: block !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+    margin-bottom: 8pt !important;
+    overflow: visible !important;
+  }
+
+  /* Headings must never be orphaned alone at the bottom of a page */
+  h1, h2, h3, h4, h5, h6,
+  .rfq-print-document h1,
+  .rfq-print-document h2,
+  .rfq-print-document h3 {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Subtle engineering accent color for headings (Navy #1e3a8a) */
+  .rfq-print-document h1 {
+    color: #0f172a !important;
+    font-size: 11pt !important;
+    font-weight: 700 !important;
+  }
+
+  .rfq-print-document h2 {
+    color: #1e3a8a !important;
+    font-size: 9pt !important;
+    font-weight: 700 !important;
+    border-bottom: 1.5px solid #94a3b8 !important;
+    padding-bottom: 2pt !important;
+    margin-bottom: 5pt !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+  }
+
+  .rfq-print-document h3 {
+    color: #0f172a !important;
+    font-size: 8.5pt !important;
+    font-weight: 700 !important;
+  }
+
+  /* Completely remove interactive portal chrome, navigation, buttons, and form inputs */
+  header,
+  nav,
+  button,
+  input,
+  select,
+  textarea,
+  .print-hide,
+  .no-print,
+  [data-testid="download-requirement-markdown"],
+  [data-testid="download-requirement-json"],
+  [data-testid="toggle-spec-table"],
+  [data-testid="toggle-spec-cards"] {
+    display: none !important;
+  }
+
+  /* Container resets */
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  .rfq-document-container {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Section cards styled as clean document chapters */
+  .rfq-section-card {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 4pt !important;
+    padding: 8pt 10pt !important;
+    margin-bottom: 10pt !important;
+    box-shadow: none !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+
+  /* High-contrast typography */
+  p, span, td, th, li {
+    color: #1e293b !important;
+  }
+  .text-white {
+    color: #0f172a !important;
+  }
+  .text-slate-200, .text-slate-300, .text-slate-400, .text-slate-500 {
+    color: #334155 !important;
+  }
+  .text-amber-300, .text-amber-400, .text-amber-200 {
+    color: #92400e !important;
+  }
+  .text-emerald-300, .text-emerald-400 {
+    color: #065f46 !important;
+  }
+  .text-sky-300, .text-sky-400 {
+    color: #0369a1 !important;
+  }
+  .text-rose-300, .text-rose-400 {
+    color: #9f1239 !important;
+  }
+
+  /* Tables in Print: Allow natural page splitting between rows, repeat header */
+  table {
+    display: table !important;
+    border-collapse: collapse !important;
+    width: 100% !important;
+    border: 1px solid #94a3b8 !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+    margin-bottom: 6pt !important;
+  }
+  thead {
+    display: table-header-group !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+  tbody {
+    display: table-row-group !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+  thead tr {
+    background-color: #f1f5f9 !important;
+    background: #f1f5f9 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+  th {
+    background-color: #f1f5f9 !important;
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
+    padding: 3.5pt 5pt !important;
+    font-size: 7.5pt !important;
+    font-weight: 700 !important;
+    line-height: 1.3 !important;
+  }
+  td {
+    border: 1px solid #cbd5e1 !important;
+    padding: 3.5pt 5pt !important;
+    font-size: 7.5pt !important;
+    color: #1e293b !important;
+    line-height: 1.3 !important;
+  }
+  tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Badges and pills in print */
+  span.rounded-full, span.rounded-lg, span.rounded {
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
+  }
+}

@@ -1,0 +1,20 @@
+id: email_read
+name: Read Mock Email
+version: "1.0.0"
+description: Reads one deterministic mock email.
+adapter_type: python_callable
+entrypoint: plugins.tools.email_tools:read_email
+enabled: true
+input_schema:
+  type: object
+  properties:
+    email_id: {type: string}
+  required: [email_id]
+output_schema:
+  type: object
+  properties:
+    email_id: {type: string}
+    subject: {type: string}
+    body: {type: string}
+  required: [email_id, subject, body]
+required_permissions: [email.read]

@@ -1,0 +1,18 @@
+id: parallel_analysis_demo
+version: 1.0.18
+nodes:
+- id: approval_gate2
+  type: human_approval
+  agent_id: null
+  status: available
+  input_mappings: {}
+  approval_payload_path: node_outputs.validate_title_analysis
+  approval_options:
+  - approve
+  - reject
+  execute_in: workflow
+  timeout_seconds: null
+  max_retries: null
+  retry_backoff_seconds: null
+edges: []
+max_steps: 100

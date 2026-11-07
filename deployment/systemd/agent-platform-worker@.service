@@ -1,0 +1,48 @@
+[Unit]
+Description=Agent Platform Temporal Worker (Instance %i)
+Documentation=file:///opt/agent_platform/deployment/README.md
+After=network.target network-online.target time-sync.target
+Wants=network-online.target
+PartOf=agent-platform-workers.target
+
+[Service]
+Type=simple
+User=agentplatform
+Group=agentplatform
+WorkingDirectory=/opt/agent_platform
+
+# Secure environment file (must have 0600 or 0640 permissions)
+EnvironmentFile=/etc/agent-platform/worker.env
+Environment=WORKER_INSTANCE=%i
+
+# Idempotently pre-initialize DB schema once before worker tasks run
+ExecStartPre=/opt/agent_platform/.venv/bin/python -c "from app.storage.repository import init_db; init_db()"
+
+# Worker execution command
+ExecStart=/opt/agent_platform/.venv/bin/python -m app.temporal.worker
+
+# Graceful shutdown configuration:
+# Worker drains in-flight tasks for up to TEMPORAL_WORKER_SHUTDOWN_TIMEOUT_SECONDS (default 30s).
+# TimeoutStopSec (60s) is strictly longer than the worker drain timeout to allow clean exit before SIGKILL.
+KillSignal=SIGTERM
+TimeoutStopSec=60s
+KillMode=mixed
+
+# Crash recovery and automatic restart
+Restart=on-failure
+RestartSec=5s
+
+# Security and sandbox hardening
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+
+# Journald logging configuration
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=agent-worker-%i
+
+[Install]
+WantedBy=agent-platform-workers.target multi-user.target
+

@@ -1,0 +1,11 @@
+id: manifest_echo
+name: Manifest Echo
+version: "1.0.0"
+description: Deterministic agent discovered from a trusted manifest.
+capabilities: [testing, manifest_discovery]
+adapter_type: python_callable
+entrypoint: plugins.examples.manifest_echo:run
+enabled: true
+input_schema: {type: object}
+output_schema: {type: object}
+

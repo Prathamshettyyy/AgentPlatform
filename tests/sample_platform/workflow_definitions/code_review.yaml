@@ -1,0 +1,29 @@
+id: code_review
+version: "1.0.0"
+nodes:
+  - id: inspect
+    type: agent
+    agent_id: source_inspector
+    input_mappings:
+      source_code: {path: workflow_input.source_code}
+  - id: review
+    type: agent
+    agent_id: code_reviewer
+    input_mappings:
+      inspection: {path: node_outputs.inspect}
+  - id: validate
+    type: agent
+    agent_id: review_validator
+    input_mappings:
+      review: {path: node_outputs.review}
+  - id: approve
+    type: human_approval
+    approval_payload_path: node_outputs.validate
+    approval_options: [approve, reject]
+edges:
+  - from: inspect
+    to: review
+  - from: review
+    to: validate
+  - from: validate
+    to: approve

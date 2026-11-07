@@ -1,0 +1,20 @@
+id: review_validator
+name: Review Contract Validator
+version: "1.0.0"
+description: Validates the structured output of the code review agent.
+capabilities: [schema_validation, code_review]
+adapter_type: python_callable
+entrypoint: plugins.examples.code_review.validator:run
+enabled: true
+input_schema:
+  type: object
+  required: [review]
+  properties:
+    review: {type: object}
+output_schema:
+  type: object
+  required: [valid, errors, checked_findings]
+  properties:
+    valid: {type: boolean}
+    errors: {type: array, items: {type: string}}
+    checked_findings: {type: integer}

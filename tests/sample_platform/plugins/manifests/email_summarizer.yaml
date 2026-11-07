@@ -1,0 +1,14 @@
+id: email_summarizer
+name: Email Summarizer
+version: "1.0.0"
+description: Summarizes mock email data.
+capabilities: [email_summarization]
+adapter_type: python_callable
+entrypoint: plugins.examples.email_summarizer.agent:run
+enabled: true
+input_schema: {type: object}
+output_schema: {type: object}
+execution:
+  allowed_tools: [email_search, email_read]
+  permissions: [email.read]
+

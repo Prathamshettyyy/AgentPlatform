@@ -1,0 +1,19 @@
+id: email_search
+name: Search Mock Emails
+version: "1.0.0"
+description: Searches deterministic mock email data.
+adapter_type: python_callable
+entrypoint: plugins.tools.email_tools:search_emails
+enabled: true
+input_schema:
+  type: object
+  properties:
+    query: {type: string}
+  required: [query]
+output_schema:
+  type: object
+  properties:
+    email_ids: {type: array}
+    count: {type: integer}
+  required: [email_ids, count]
+required_permissions: [email.read]

@@ -1,0 +1,19 @@
+id: tool_client_agent
+name: Tool Client Agent
+version: "1.0.0"
+description: Uses the generic tool client to call an allowlisted deterministic tool.
+capabilities: [tool_use]
+adapter_type: python_callable
+entrypoint: plugins.examples.tool_client_agent:run
+enabled: true
+input_schema:
+  type: object
+  properties:
+    tool_id: {type: string}
+    value: {type: string}
+  required: [value]
+output_schema:
+  type: object
+execution:
+  allowed_tools: [tool_echo]
+  permissions: []

@@ -1,0 +1,18 @@
+id: tool_echo
+name: Deterministic Echo Tool
+version: "1.0.0"
+description: Returns the supplied value unchanged.
+adapter_type: python_callable
+entrypoint: plugins.tools.echo_tool:run
+enabled: true
+input_schema:
+  type: object
+  properties:
+    value: {type: string}
+  required: [value]
+output_schema:
+  type: object
+  properties:
+    result: {type: string}
+  required: [result]
+required_permissions: []

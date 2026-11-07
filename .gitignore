@@ -1,0 +1,48 @@
+# Python & Environments
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Databases & SQLite WAL
+*.db
+*.db-wal
+*.db-shm
+*.db.bak*
+*.sqlite
+*.sqlite3
+
+# Environment & Secrets (Keep .env.example tracked)
+.env
+.env.local
+.env.*.local
+geotechnical-portal/.env
+frontend/.env
+
+# Local Uploads & Temporary Scratch
+storage/
+scratch/
+
+# Node & Frontend Build Artifacts
+node_modules/
+*/node_modules/
+dist/
+*/dist/
+.vite/
+*/.vite/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

@@ -1,0 +1,22 @@
+id: email_send
+name: Send Mock Email
+version: "1.0.0"
+description: Records a mock send without external email access.
+adapter_type: python_callable
+entrypoint: plugins.tools.email_tools:send_email
+enabled: true
+idempotent: false
+input_schema:
+  type: object
+  properties:
+    to: {type: string}
+    subject: {type: string}
+    body: {type: string}
+  required: [to, subject, body]
+output_schema:
+  type: object
+  properties:
+    sent: {type: boolean}
+    message_id: {type: string}
+  required: [sent, message_id]
+required_permissions: [email.send]

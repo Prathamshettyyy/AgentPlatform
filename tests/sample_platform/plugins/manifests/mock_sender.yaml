@@ -1,0 +1,14 @@
+id: mock_sender
+name: Mock Sender
+version: "1.0.0"
+description: Simulates sending without external access.
+capabilities: [mock_send]
+adapter_type: python_callable
+entrypoint: plugins.examples.mock_sender.agent:run
+enabled: true
+input_schema: {type: object}
+output_schema: {type: object}
+execution:
+  allowed_tools: [email_send]
+  permissions: [email.send]
+

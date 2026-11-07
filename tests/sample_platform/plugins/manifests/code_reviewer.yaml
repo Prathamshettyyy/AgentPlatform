@@ -1,0 +1,21 @@
+id: code_reviewer
+name: Deterministic Code Reviewer
+version: "1.0.0"
+description: Produces structured findings from source-inspection facts.
+capabilities: [code_review, static_analysis]
+adapter_type: python_callable
+entrypoint: plugins.examples.code_review.reviewer:run
+enabled: true
+input_schema:
+  type: object
+  required: [inspection]
+  properties:
+    inspection: {type: object}
+output_schema:
+  type: object
+  required: [summary, findings, finding_count, risk_level]
+  properties:
+    summary: {type: string}
+    findings: {type: array}
+    finding_count: {type: integer}
+    risk_level: {type: string, enum: [clear, low, high]}

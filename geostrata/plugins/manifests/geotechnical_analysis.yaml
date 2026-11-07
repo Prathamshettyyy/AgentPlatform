@@ -1,0 +1,87 @@
+id: geotechnical_analysis
+name: Geotechnical Analysis Agent
+version: 1.0.0
+description: Synthesizes geotechnical engineering documents, subsurface boring logs, laboratory properties, foundation systems, and site preparation specifications using LangGraph and evidence-grounded AI.
+capabilities:
+  - geotechnical_analysis
+  - langgraph_workflow
+  - document_intelligence
+adapter_type: python_callable
+entrypoint: geostrata.plugins.geotechnical_analysis.adapter:run
+enabled: true
+input_schema:
+  type: object
+  properties:
+    project_id:
+      type: string
+      description: Project identifier
+      default: default
+    document_id:
+      type: string
+      description: UUID of the ingested geotechnical soil report PDF (optional if confirmed_document_ids provided)
+    confirmed_document_ids:
+      type: array
+      items:
+        type: string
+      description: List of confirmed document UUIDs for the project
+    llm_profile:
+      type: string
+      description: Model profile defined in config/llm_profiles.yaml
+      default: document_analysis
+output_schema:
+  type: object
+  properties:
+    report_id:
+      type: string
+    document_id:
+      type: string
+    project_id:
+      type: string
+    status:
+      type: string
+    execution_status:
+      type: string
+    confirmed_document_ids:
+      type: array
+      items:
+        type: string
+    document_name:
+      type: string
+    review_status:
+      type: string
+    executive_summary:
+      type: object
+    project_context:
+      type: object
+    investigation_summary:
+      type: object
+    subsurface_conditions:
+      type: object
+    laboratory_interpretation:
+      type: object
+    groundwater_assessment:
+      type: object
+    foundation_systems:
+      type: object
+    foundation_comparison:
+      type: object
+    site_preparation:
+      type: object
+    risks_and_concerns:
+      type: object
+    missing_information:
+      type: object
+    questions_for_engineers:
+      type: object
+    evidence_references:
+      type: object
+    limitations_and_review:
+      type: object
+    markdown_content:
+      type: string
+execution:
+  allowed_tools: []
+  permissions:
+    - documents.read
+    - analysis.write
+

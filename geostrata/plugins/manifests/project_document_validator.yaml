@@ -1,0 +1,58 @@
+id: project_document_validator
+name: Validate Project Documents
+version: 1.0.0
+description: Validates project documents, confirms readiness status, enforces human confirmation for uncertain associations, checks document version hashes, and produces immutable snapshot references prior to geotechnical analysis.
+capabilities:
+  - document_validation
+  - pre_workflow_check
+  - project_integrity
+adapter_type: python_callable
+entrypoint: geostrata.plugins.project_document_validator.adapter:run
+enabled: true
+input_schema:
+  type: object
+  properties:
+    project_id:
+      type: string
+      description: Project identifier
+      default: default
+    confirmed_document_ids:
+      type: array
+      items:
+        type: string
+      description: List of confirmed document UUIDs for the project
+    expected_versions:
+      type: object
+      description: Optional map of document_id to expected sha256_hash to guard against mid-run document modifications
+output_schema:
+  type: object
+  properties:
+    status:
+      type: string
+    execution_status:
+      type: string
+    project_id:
+      type: string
+    validated_document_ids:
+      type: array
+      items:
+        type: string
+    confirmed_document_ids:
+      type: array
+      items:
+        type: string
+    primary_document_id:
+      type: string
+    document_id:
+      type: string
+    snapshot_id:
+      type: string
+    document_versions:
+      type: object
+    message:
+      type: string
+execution:
+  allowed_tools: []
+  permissions:
+    - documents.read
+

@@ -1,0 +1,714 @@
+# Build a Reusable, Extensible AI Agent Framework Using LangGraph
+
+## 1. Project objective
+
+I want to build a reusable backend framework on top of LangGraph that allows developers to create independent AI agents, register them, connect them into workflows, execute them, monitor them, and add human-in-the-loop steps without rebuilding common infrastructure for every agent.
+
+This is a framework for developers, not a frontend-first application.
+
+My central requirement is:
+
+**Adding a new compatible agent must not require modifying the core execution engine. Connecting existing agents into a new workflow must not require modifying their internal implementations.**
+
+For example, I might independently create:
+- An email summarization agent using an Outlook API.
+- An email reply-drafting agent.
+- A document question-answering agent.
+- A coding agent.
+- A custom agent using a different LLM provider.
+- An existing compiled LangGraph agent.
+
+I should be able to register these agents and connect them through a configurable workflow definition. The platform should supply reusable execution, state management, monitoring, persistence and human approval capabilities.
+
+Use Python, LangGraph, FastAPI and Pydantic as the primary technologies. Keep model-provider integration optional so individual agents can use Ollama or other providers independently.
+
+## 2. Workspace and project constraints
+
+The currently open workspace is the new, standalone `agent_platform` folder. It is the project root.
+
+Create all project files directly inside the currently open folder. Do not create another nested `agent_platform` folder. Do not inspect, move, modify, import from, or depend on my previous `langgraph-learning` project.
+
+Important:
+- First inspect the current workspace and relevant development environment. Preserve any existing files and do not overwrite or delete files without inspecting them.
+- Detect installed Python versions and relevant package versions before choosing dependencies.
+- Do not assume a particular Python version will work with every dependency.
+- Use compatible, tested dependency versions and record them in `requirements.txt`.
+- Create a dedicated `.venv` inside this project. Do not depend on or overwrite any virtual environment in another folder.
+- Do not copy or rewrite my previous agents unless they are required for a demonstration; prefer independent mock examples in this project.
+- Do not put real API credentials in source code.
+- Do not build a frontend in the initial release.
+- Do not stop after producing an architecture document or empty scaffolding. Implement and test a functioning MVP.
+
+Before implementation, briefly inspect the current workspace and environment. Then follow the implementation phases below. If a dependency or API differs from the documentation, verify its current API and use the supported version. If shell execution fails, stop without attempting file moves or unverified writes, and report the exact blocker.
+
+## 3. High-level architecture
+
+Build the framework using the following logical layers.
+
+### Layer A: Agent SDK
+
+Provides common agent contracts, typed input and output models, execution context and developer helpers.
+
+### Layer B: Agent registry and plugin system
+
+Discovers explicitly registered trusted agents and exposes their public metadata, capabilities and invocation adapters.
+
+### Layer C: Generic execution runtime
+
+Invokes any registered compatible agent and automatically supplies execution IDs, logging, timing, error handling and standardized results.
+
+### Layer D: Configurable workflow engine
+
+Reads workflow definitions, validates nodes and edges, resolves input/output mappings, constructs LangGraph graphs dynamically and executes them.
+
+### Layer E: Platform services
+
+Provides run history, monitoring, checkpoints, human-in-the-loop approval, configuration and scheduling.
+
+### Layer F: Backend API
+
+Uses FastAPI to expose agent metadata, workflow management, execution status and approval/resume operations.
+
+Use LangGraph's existing graph execution, state, routing, checkpointing and interrupt mechanisms. Do not create a separate graph execution engine.
+
+Official references to verify while implementing:
+- LangGraph graph API: https://docs.langchain.com/oss/python/langgraph/graph-api
+- LangGraph persistence: https://docs.langchain.com/oss/python/langgraph/persistence
+- LangGraph interrupts: https://docs.langchain.com/oss/python/langgraph/interrupts
+- LangGraph checkpointers: https://docs.langchain.com/oss/python/langgraph/checkpointers
+- LangGraph tracing and LangSmith: https://docs.langchain.com/langsmith/observability
+- FastAPI: https://fastapi.tiangolo.com/
+
+Verify actual import paths, dependency versions, checkpointer APIs and resume semantics before writing the corresponding code.
+
+## 4. Phase 1 — Define the Agent SDK and contracts
+
+Start by defining the standard interface that lets the framework treat different agents consistently.
+
+Create Pydantic models for:
+
+### AgentMetadata
+Include:
+- `id`
+- `name`
+- `description`
+- `version`
+- `capabilities`
+- `input_schema` or equivalent input contract metadata
+- `output_schema` or equivalent output contract metadata
+- `enabled`
+- `adapter_type`
+- Any relevant execution capability metadata.
+
+### AgentRequest
+Include:
+- A task or instruction.
+- An `inputs` dictionary for agent-specific structured data.
+- A run ID.
+- A workflow ID.
+- A node ID.
+- An optional session or context identifier when needed.
+
+### AgentResult
+Include:
+- `status`
+- Structured `output`
+- An optional structured error.
+- Optional execution metadata.
+
+### AgentContext
+Provide the agent with controlled execution context, including run ID, workflow ID, node ID, logger and safe configuration access.
+
+Define a small protocol or base abstraction for compatible agents. Do not unnecessarily force all agents to inherit a heavyweight class.
+
+Prefer a contract that can support both synchronous and asynchronous implementations eventually. For the first version, implement the simplest execution model that works reliably with FastAPI and the chosen LangGraph integration.
+
+Agent-specific details should live inside `inputs` and `output`, not as special fields in the framework's global state.
+
+Create one deterministic example agent that accepts a request and returns a structured response. No LLM should be required for SDK tests.
+
+Acceptance criteria:
+- Input and output contracts are validated.
+- The example agent uses the standard interface.
+- Contract tests do not require an LLM or external API.
+
+## 5. Phase 2 — Build the registry and plugin loading system
+
+Implement an `AgentRegistry`.
+
+It must support:
+- Registering agents.
+- Looking up an agent by ID.
+- Listing enabled agents.
+- Retrieving agent metadata.
+- Validating agent availability and status.
+- Rejecting duplicate IDs.
+- Rejecting invalid registrations.
+- Disabling agents without deleting their implementation.
+- Resolving which adapter invokes an agent.
+
+Support trusted agent manifests, preferably YAML or JSON, that describe the agent ID, metadata, version, capabilities, input/output contracts, adapter type and trusted entry point.
+
+An example manifest:
+
+```yaml
+id: email_summarizer
+name: Email Summarizer
+version: "1.0.0"
+description: Summarizes a supplied list of emails.
+capabilities:
+  - email_summarization
+adapter_type: python_callable
+entrypoint: plugins.examples.email_summarizer.agent:run
+enabled: true
+```
+
+The manifest is illustrative; implement the schema using validated models. Ensure the corresponding directories are valid Python packages where needed (for example, with appropriate `__init__.py` files), and make the entry point consistent with the actual source tree.
+
+Security requirements:
+- Load code only from explicitly trusted plugin locations or an explicit allowlist.
+- Do not let users or LLM-generated plans supply arbitrary Python import paths.
+- Never execute shell commands or arbitrary code from a workflow definition.
+- Reject invalid paths and entry points outside the trusted package namespace.
+- Do not expose an API that blindly uploads and executes arbitrary Python plugins.
+
+The framework should not require editing the registry implementation or graph builder each time a new plugin is added.
+
+Define a clear developer workflow:
+
+1. Create a new agent implementation.
+2. Add its trusted manifest.
+3. Validate and load the plugin.
+4. Use its ID in a workflow definition.
+
+Document any necessary trusted registration or restart/reload steps honestly.
+
+## 6. Phase 3 — Implement adapters and the generic AgentRunner
+
+Agents may have different internal implementations. Use adapters to normalize their invocation.
+
+Implement:
+- A Python-callable agent adapter.
+- An adapter for an existing compiled LangGraph graph, using the framework's standard request/result contract.
+- A clean adapter interface that allows an HTTP or remote-service adapter to be added later.
+
+The `AgentRunner` must:
+1. Look up the agent by registered ID.
+2. Reject unknown or disabled agents.
+3. Validate its inputs.
+4. Create or receive execution context.
+5. Invoke it through the appropriate adapter.
+6. Normalize its return value.
+7. Validate its output.
+8. Record status, duration and errors.
+9. Return an `AgentResult`.
+
+Implement basic retries only for configured, appropriate failures. Avoid blindly retrying non-idempotent operations.
+
+Failures must be represented clearly and consistently. Do not silently convert failed executions into successful results.
+
+Any agent that uses its own LLM provider or internally compiled graph must remain free to implement its own internal logic.
+
+Acceptance criteria:
+- The same runner can execute two independently implemented compatible agents.
+- The runner requires no agent-specific branching.
+- An exception from an agent produces a traceable failed execution.
+- A new adapter can be implemented without changing existing agents.
+
+## 7. Phase 4 — Design the configurable workflow schema
+
+This phase implements the core idea of the project.
+
+Create validated models for:
+- Workflow metadata.
+- Workflow nodes.
+- Workflow edges.
+- Agent node configuration.
+- Input/output mappings.
+- Conditional routing.
+- Human approval nodes.
+
+Store workflow definitions as validated YAML or JSON. Use one source format consistently, while exposing equivalent structured models through the API.
+
+A workflow should specify which agents run, how nodes connect, how data flows and where approval is required.
+
+Example:
+
+```yaml
+id: email_assistant
+version: "1.0.0"
+
+nodes:
+  - id: summarize
+    type: agent
+    agent_id: email_summarizer
+    input_mappings:
+      emails: workflow_input.emails
+
+  - id: draft_reply
+    type: agent
+    agent_id: email_reply_writer
+    input_mappings:
+      email_summary: node_outputs.summarize.summary
+
+  - id: approve_reply
+    type: human_approval
+    approval_payload_path: node_outputs.draft_reply
+
+edges:
+  - from: summarize
+    to: draft_reply
+
+  - from: draft_reply
+    to: approve_reply
+```
+
+This is an example format to implement, not an existing LangGraph syntax.
+
+### Mapping requirements
+
+For the first version, keep mapping deliberately small.
+
+Support:
+- Selecting values from workflow inputs.
+- Selecting values from a previous node's output.
+- Mapping selected fields into the target agent's `inputs` dictionary.
+- Clear errors when a requested path does not exist.
+- Optional literal values where appropriate.
+
+For example:
+
+`node_outputs.summarize.summary`
+
+maps to the target agent input:
+
+`email_summary`
+
+Implement a safe path resolver over dictionaries and lists, with validated traversal rules. Do not use Python `eval()` or execute workflow expressions.
+
+Do not build an advanced transformation or expression language in version one. Consider a library such as JMESPath only if future requirements justify richer querying.
+
+### Workflow validation
+
+Before graph construction:
+- Reject duplicate node IDs.
+- Reject unregistered or disabled agent IDs.
+- Reject unsupported node types.
+- Reject invalid mappings and malformed conditions.
+- Reject edges to nonexistent nodes.
+- Check start/end reachability and invalid graph structures.
+- Reject unsupported cycles in version one.
+- Validate that outgoing edges are unambiguous.
+- Check that human approval nodes have suitable inbound and outbound paths.
+
+Return actionable validation errors before execution begins.
+
+## 8. Phase 5 — Implement the dynamic LangGraph WorkflowBuilder
+
+Build a `WorkflowBuilder` that converts the validated workflow definition into a real LangGraph graph.
+
+This is one of the most important parts of the system.
+
+Requirements:
+- Create one LangGraph node for each workflow node definition.
+- Use a generic invocation wrapper for all agent nodes.
+- Resolve the actual implementation from `AgentRegistry` at runtime.
+- Create edges from the workflow configuration.
+- Support conditional routing through validated conditions.
+- Add start/end connections where appropriate.
+- Compile the graph using LangGraph's supported APIs.
+- Avoid hard-coding an individual agent into graph construction.
+- Keep graph construction separate from agent business logic.
+
+The same graph builder must handle the email summarizer, reply writer, document agent, coding agent and future agents without code modifications.
+
+### Initial workflow scope
+
+Version one must support:
+1. Start and end.
+2. Sequential agent nodes.
+3. Shared workflow state.
+4. Input/output mappings.
+5. Conditional edges with a small, documented operator set.
+6. Human approval nodes.
+7. Clear error handling and execution limits.
+
+Do not implement parallel execution or unbounded loops in this first version. Design the internal interfaces so these can be added later.
+
+For conditional routing, use declarative comparisons such as equality, inequality, value existence and boolean decisions. Validate condition operands and allowed operators before compilation. Do not execute arbitrary Python expressions.
+
+Acceptance criteria:
+- A new workflow can be created from a definition without editing the graph builder.
+- A new registered agent can be used by the workflow without adding a new graph-node function.
+- The builder rejects invalid workflows before running them.
+- Tests demonstrate data flowing between nodes through configured mappings.
+
+## 9. Phase 6 — Define the shared LangGraph state carefully
+
+Use a generic workflow state. It should include fields such as:
+- `run_id`
+- `workflow_id`
+- `workflow_version`
+- `workflow_input`
+- `node_outputs`
+- Any minimal routing context required by conditional edges.
+- References to execution metadata where appropriate.
+- `final_output`
+
+Do not create a separate global state field for every agent.
+
+Store each node's structured output under its node ID, so another node can use a mapping to retrieve the fields it needs.
+
+Keep the following distinction clear:
+
+**LangGraph checkpoint state is for execution continuity. The execution repository is the source of truth for persisted run and node status/history.**
+
+Do not create two competing sources of truth for whether a run or node succeeded, failed or is awaiting approval.
+
+For sequential version one, use a simple state update strategy. Do not introduce parallel state reducers until parallel execution is implemented.
+
+If concurrent execution is introduced in a future version, explicitly define reducers for fields that concurrent nodes may update.
+
+## 10. Phase 7 — Add centralized monitoring and execution history
+
+Monitoring must be provided automatically by the platform. Agent developers should not have to write their own timing and logging logic for every plugin.
+
+Create a provider-independent execution tracking interface.
+
+Track workflow runs and individual node executions with fields such as:
+- Run ID.
+- Workflow ID and version.
+- Node ID and registered agent ID.
+- Execution attempt.
+- Start and end timestamps.
+- Duration.
+- Status.
+- Structured error information.
+- Parent/run relationships if applicable.
+- Available model/token usage metrics.
+- Correlation identifiers.
+
+Include execution statuses such as queued, running, succeeded, failed, waiting for approval and cancelled where applicable.
+
+Implement:
+- Structured logs.
+- Persistent run history.
+- Persistent node execution history.
+- A method for retrieving the execution trace of a workflow run.
+- Consistent handling of exceptions and interruption.
+- Basic retry-attempt tracking.
+
+Use SQLite for the initial execution metadata repository. Keep persistence behind a small repository interface so another database can replace it later.
+
+### Avoid conflicting status records
+
+The execution repository must be authoritative for persisted run/node status and history. LangGraph checkpoints preserve graph state; they should not be treated as a second independent execution-history database.
+
+Make sure pause/resume and exceptions update the repository consistently. Do not leave a run indefinitely marked as running if the graph returns an interrupt.
+
+### Observability integration
+
+Provide an optional LangSmith tracing integration or a provider-independent tracing hook that supports it.
+
+The framework should still run when no tracing provider credentials are configured. Local execution records must work without an external account.
+
+Clearly distinguish:
+- Platform execution logs and status history.
+- LangGraph checkpoint data.
+- Detailed traces inside an agent's LLM and tool calls.
+
+Document that detailed internal calls and token usage require the agent or its model integration to emit appropriate tracing data.
+
+Never log passwords, API keys, authorization tokens or sensitive email content by default. Redact or minimize input and output in monitoring records.
+
+## 11. Phase 8 — Implement reusable human-in-the-loop approval
+
+Use LangGraph's built-in interrupt and checkpoint functionality.
+
+Implement a generic human approval node that can be added to a workflow definition without writing approval code inside every agent.
+
+It should:
+1. Receive an approval payload from workflow state.
+2. Pause execution and surface the pending decision to the caller.
+3. Persist the graph state through the configured checkpointer.
+4. Record that the workflow is awaiting approval.
+5. Accept an approval, rejection or supported response.
+6. Resume using the correct persisted thread.
+7. Route according to the human's decision.
+8. Update execution history.
+
+Test an approval path with mock data. No actual email should be sent.
+
+### Implementation correctness
+
+Verify the current official LangGraph API.
+
+In particular:
+- Use a checkpointer when using `interrupt()`.
+- Resume using the supported `Command(resume=...)` pattern.
+- Use the same thread ID when resuming the paused execution.
+- Persist enough workflow identity and version information to reconstruct the correct graph.
+- Understand that a node interrupted with `interrupt()` restarts from the beginning when resumed.
+- Avoid doing irreversible external work before the interrupt.
+- Protect external actions against accidental duplicate execution when retries or resume are involved.
+
+For development, offer an in-memory checkpointer for deterministic tests. For durable local pause/resume, use the supported SQLite checkpointer package if compatible with the installed LangGraph version. Do not represent an in-memory checkpoint as persistent across process restarts.
+
+Use the checkpointer as a separate component from the execution metadata repository.
+
+Add clear error handling for missing threads, invalid resume values and attempts to resume a run that is not awaiting a decision.
+
+## 12. Phase 9 — Build the FastAPI backend
+
+Once the SDK, registry, runner and graph engine work independently, expose them through FastAPI.
+
+Provide endpoints similar to:
+
+### Agents
+- `GET /v1/agents` — list registered and enabled agents.
+- `GET /v1/agents/{agent_id}` — return the public metadata for an agent.
+
+### Workflows
+- `GET /v1/workflows` — list stored workflow definitions.
+- `POST /v1/workflows` — validate and create a workflow definition.
+- `GET /v1/workflows/{workflow_id}` — retrieve a definition.
+- Provide a safe way to retrieve a specific immutable workflow version if versions are supported.
+
+### Runs
+- `POST /v1/runs` — start a workflow execution.
+- `GET /v1/runs/{run_id}` — retrieve status and final output when available.
+- `GET /v1/runs/{run_id}/events` — retrieve recorded execution events.
+- `POST /v1/runs/{run_id}/resume` — resume a paused workflow with the required human decision.
+
+### Approvals
+- `GET /v1/approvals` — list pending approvals.
+- Include enough metadata to identify the workflow, node, proposed action and available decision options.
+
+All API endpoints must call the same framework services and execution engine. Do not create a second workflow execution implementation specifically for the API.
+
+Persist the workflow definition or version and the LangGraph thread ID against each run so resume uses the correct workflow and checkpoint.
+
+Use Pydantic validation, clear error responses and appropriate HTTP status codes.
+
+Make authentication an explicit extension point. Do not expose internal configuration, secrets or unsafe plugin-loading controls through public endpoints.
+
+## 13. Phase 10 — Add scheduling through a separate trigger layer
+
+Scheduling should trigger the existing workflow execution service; it must not be implemented separately inside each agent.
+
+Provide an interface for workflow triggers and implement a minimal scheduler integration using a compatible library such as APScheduler if suitable for the environment.
+
+Support a basic scheduled workflow with a configured interval or cron expression where supported.
+
+Requirements:
+- The scheduler starts the same workflow engine used by `POST /v1/runs`.
+- Persist or clearly document the scheduler's configuration and runtime limitations.
+- Avoid creating duplicate jobs when the application restarts.
+- Make it possible to enable or disable a scheduled workflow.
+- Do not require actual Outlook credentials for the example.
+- Add deterministic tests for scheduler job registration and trigger dispatch; do not use long real-time sleeps in tests.
+
+Keep production distributed scheduling and external job queues out of version one. Document when those would become necessary.
+
+## 14. Phase 11 — Create the email workflow demonstration
+
+Create two independent example agent plugins:
+
+### Agent A: Email Summarizer
+
+Receives mock email data and returns a structured summary, such as important topics, email subjects and possible follow-ups.
+
+### Agent B: Email Reply Drafter
+
+Receives the summary and selected email details and generates a mock reply draft.
+
+Add a mock sender step that simulates sending without interacting with Outlook.
+
+Create a workflow using the workflow-definition format:
+
+Start → Email Summarizer → Reply Drafter → Human Approval → Mock Sender → End
+
+The workflow must be defined through configuration, not hard-coded into a dedicated graph implementation.
+
+Demonstrate:
+- Registration of both agents.
+- Workflow validation.
+- Dynamic node and edge construction.
+- Input/output mapping from the summarizer to the reply writer.
+- Centralized execution logging.
+- A run that completes successfully.
+- A run that pauses for approval.
+- Resumption after approval.
+- Rejection handling.
+- An execution failure that appears in the run history.
+
+Use mock data only. Never send real emails from the demo.
+
+## 15. Phase 12 — Testing strategy
+
+Implement automated tests with pytest.
+
+Do not rely on a live LLM, network service or Outlook account for the core suite.
+
+Test:
+
+### Contracts and registry
+- Valid registration.
+- Duplicate IDs.
+- Unknown agent IDs.
+- Disabled agents.
+- Invalid metadata.
+- Rejected untrusted entry points.
+- Invalid input and output payloads.
+
+### Runner and adapters
+- Successful Python agent.
+- Successful compiled LangGraph agent if the adapter is implemented.
+- Standardized return values.
+- Exception handling.
+- Retry limits and timeouts where implemented.
+- Correct execution IDs and metadata.
+
+### Workflow configuration
+- Valid sequential workflow.
+- Invalid node IDs.
+- Unknown agent IDs.
+- Invalid edges and mappings.
+- Missing mapping paths.
+- Conditional routing.
+- Unsupported cycles.
+- Workflow compilation failures.
+
+### State and execution
+- Agent A output becomes Agent B input.
+- Node results are retained in shared state.
+- Run and node statuses are persisted.
+- Errors are recorded without losing the original run context.
+- Execution limits are respected.
+
+### Human-in-the-loop
+- The graph pauses at the approval node.
+- The pending approval is visible through the API/service layer.
+- The graph resumes with the same thread.
+- Approval proceeds to the next action.
+- Rejection follows the rejection path.
+- Repeated or invalid resume attempts are handled safely.
+- The SQLite checkpoint implementation preserves state across application restarts if this is claimed as supported.
+
+### Integration and extensibility
+- An entire API-to-workflow-to-agent run succeeds.
+- The email workflow works end to end with mocked data.
+- A third, unrelated compatible agent can be registered and used in a different workflow without editing the central runner or graph builder.
+- New workflow connections can be defined by configuration.
+
+The test that adds a third agent without modifying the core framework is a mandatory acceptance test.
+
+## 16. Target folder structure
+
+The following structure is relative to the already-open `agent_platform` workspace root. Do not create an additional enclosing `agent_platform/` directory. Use a modular structure similar to the following. Adapt it when needed; do not create empty modules just to match the tree.
+
+```text
+./
+├── app/
+│   ├── main.py
+│   ├── api/
+│   ├── sdk/
+│   │   ├── contracts.py
+│   │   ├── base.py
+│   │   └── context.py
+│   ├── registry/
+│   ├── runtime/
+│   │   ├── runner.py
+│   │   ├── adapters.py
+│   │   └── errors.py
+│   ├── workflows/
+│   │   ├── models.py
+│   │   ├── validator.py
+│   │   ├── mappings.py
+│   │   └── builder.py
+│   ├── monitoring/
+│   ├── approvals/
+│   ├── scheduling/
+│   └── storage/
+├── plugins/
+│   └── examples/
+│       ├── email_summarizer/
+│       ├── email_reply_writer/
+│       └── mock_sender/
+├── workflow_definitions/
+│   └── email_assistant.yaml
+├── tests/
+├── .env.example
+├── requirements.txt
+└── README.md
+```
+
+Keep the SDK and core engine independent of the example plugins. The plugins should depend on the SDK, not on private implementation details of the workflow builder.
+
+## 17. Engineering and implementation rules
+
+- Use type hints and useful docstrings.
+- Prefer small cohesive modules over large files.
+- Avoid unnecessary abstraction, infrastructure and dependencies.
+- Do not implement a frontend or visual editor in version one.
+- Do not implement parallel execution in version one.
+- Do not use `eval()` for mapping or routing conditions.
+- Never execute shell commands or Python code supplied by an LLM or workflow payload.
+- Validate and constrain plugin imports.
+- Keep agent metadata separate from implementation.
+- Keep graph checkpoints separate from the execution metadata repository.
+- Make retries and external side effects safe.
+- Avoid logging sensitive inputs and credentials.
+- Do not require an LLM to execute deterministic framework tests.
+- Do not report an unimplemented feature as complete.
+- Confirm actual APIs and package compatibility using current documentation before implementing LangGraph persistence and interrupt handling.
+- After each phase, run relevant tests before proceeding.
+- Keep the architecture and README consistent with the actual implementation.
+
+## 18. Final acceptance criteria
+
+The framework is considered to have a working MVP when all of the following are demonstrated:
+
+1. A developer can implement and register a compatible new agent without editing the core runner or graph builder.
+2. A workflow can be defined using configuration that identifies registered agents as nodes and their connections as edges.
+3. Values from one agent can be passed to another through validated input/output mappings.
+4. One generic graph-building mechanism supports different agent implementations.
+5. Every agent execution receives automatic tracking, timing, standardized errors and execution history.
+6. Human approval can pause, persist and resume a workflow.
+7. The email summarizer and reply drafter work through the same generic workflow engine.
+8. The FastAPI API can start, inspect and resume workflow runs.
+9. Automated tests prove that a third, unrelated agent can be added without modifying core orchestration code.
+10. Setup and execution instructions work in the target Windows environment.
+
+## 19. Final deliverables
+
+Produce:
+- A functioning codebase.
+- A tested dependency list.
+- A safe `.env.example`.
+- Automated tests and their results.
+- A README with setup instructions, architecture, API examples and troubleshooting.
+- An agent-developer guide showing how to add a new agent.
+- A workflow-author guide showing how to define nodes, edges, mappings and approval points.
+- A simple architecture diagram.
+- A list of completed features, deferred features and known limitations.
+
+## 20. Recommended execution order
+
+Implement in this order:
+
+1. Inspect the environment and validate the architecture.
+2. Build the contracts and one deterministic agent.
+3. Build the registry and generic runner.
+4. Add monitoring and execution metadata persistence.
+5. Implement workflow models, validation, mappings and dynamic LangGraph construction.
+6. Prove a two-agent workflow works.
+7. Add persistent checkpointing and human approval.
+8. Add the email workflow demonstration and prove the third-agent integration test.
+9. Expose the working engine through FastAPI.
+10. Add scheduling once the primary execution and resume paths are tested.
+11. Complete documentation and run the full test suite.
+
+Do not attempt to make every future production feature perfect in the first version. Prioritize a correct, maintainable working MVP, with clean extension points for parallel execution, remote adapters, additional observability providers and production deployment.
+
+At the end, report the files created, key architectural decisions, test commands and actual test results. Be honest about any incomplete work.

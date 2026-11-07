@@ -1,0 +1,94 @@
+id: foundation_research
+name: Foundation Research Agent
+version: 1.0.0
+description: Researches suitable shallow and deep foundation systems, applications, construction methods, advantages, disadvantages, and site suitability considerations using multi-document geotechnical context and external technical web research (FHWA, USACE, PTI, ACI, DFI, IBC).
+capabilities:
+  - foundation_research
+  - langgraph_workflow
+  - web_research
+  - multi_document_intelligence
+adapter_type: python_callable
+entrypoint: geostrata.plugins.foundation_research.adapter:run
+enabled: true
+input_schema:
+  type: object
+  properties:
+    project_id:
+      type: string
+      description: Project identifier
+      default: default
+    geotechnical_report_id:
+      type: string
+      description: ID of an upstream Geotechnical Analysis report to consume
+    analysis_report_id:
+      type: string
+      description: Alias for geotechnical_report_id
+    document_id:
+      type: string
+      description: UUID of the geotechnical soil report PDF (optional if upstream report provided)
+    confirmed_document_ids:
+      type: array
+      items:
+        type: string
+      description: List of confirmed document UUIDs for the project
+    foundation_types_to_research:
+      type: array
+      items:
+        type: string
+      description: Optional list of foundation types to prioritize
+    search_provider:
+      type: string
+      description: External search provider (duckduckgo, curated, mock)
+      default: duckduckgo
+    llm_profile:
+      type: string
+      description: Model profile defined in config/llm_profiles.yaml
+      default: document_analysis
+output_schema:
+  type: object
+  properties:
+    report_id:
+      type: string
+    geotechnical_report_id:
+      type: string
+    project_id:
+      type: string
+    document_id:
+      type: string
+    status:
+      type: string
+    execution_status:
+      type: string
+    confirmed_document_ids:
+      type: array
+      items:
+        type: string
+    review_status:
+      type: string
+    geotechnical_summary:
+      type: object
+    confirmed_documents_reviewed:
+      type: array
+    research_queries:
+      type: array
+    options_researched:
+      type: array
+    comparisons:
+      type: array
+    external_sources:
+      type: array
+    research_findings:
+      type: array
+    research_gaps:
+      type: array
+    engineer_questions:
+      type: array
+    markdown_content:
+      type: string
+execution:
+  allowed_tools:
+    - web_search
+  permissions:
+    - documents.read
+    - analysis.read
+    - research.write

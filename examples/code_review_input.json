@@ -1,0 +1,3 @@
+{
+  "source_code": "def calculate(value):\n    return eval(value)\n"
+}

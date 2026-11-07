@@ -1,0 +1,11 @@
+id: api_test_flow
+version: 1.0.0
+nodes:
+- id: step_a
+  type: agent
+  agent_id: echo_agent
+  execute_in: activity
+  input_mappings:
+    message:
+      literal: hello api
+edges: []

@@ -1,0 +1,76 @@
+id: geotechnical_foundation_investigation
+version: 1.0.0
+nodes:
+  - id: validate_project_documents_node
+    type: agent
+    agent_id: project_document_validator
+    execute_in: activity
+    timeout_seconds: 60
+    max_retries: 2
+    retry_backoff_seconds: 1.0
+    input_mappings:
+      project_id:
+        path: workflow_input.project_id
+      confirmed_document_ids:
+        path: workflow_input.confirmed_document_ids
+  - id: geotechnical_analysis_node
+    type: agent
+    agent_id: geotechnical_analysis
+    execute_in: activity
+    timeout_seconds: 300
+    max_retries: 2
+    retry_backoff_seconds: 1.0
+    input_mappings:
+      project_id:
+        path: workflow_input.project_id
+      confirmed_document_ids:
+        path: node_outputs.validate_project_documents_node.validated_document_ids
+      document_id:
+        path: node_outputs.validate_project_documents_node.primary_document_id
+  - id: foundation_research_node
+    type: agent
+    agent_id: foundation_research
+    execute_in: activity
+    timeout_seconds: 300
+    max_retries: 2
+    retry_backoff_seconds: 1.0
+    input_mappings:
+      project_id:
+        path: workflow_input.project_id
+      geotechnical_report_id:
+        path: node_outputs.geotechnical_analysis_node.report_id
+      confirmed_document_ids:
+        path: node_outputs.geotechnical_analysis_node.confirmed_document_ids
+      document_id:
+        path: node_outputs.geotechnical_analysis_node.document_id
+      search_provider:
+        literal: curated
+  - id: requirement_agent_node
+    type: agent
+    agent_id: requirement_agent
+    execute_in: activity
+    timeout_seconds: 300
+    max_retries: 2
+    retry_backoff_seconds: 1.0
+    input_mappings:
+      project_id:
+        path: workflow_input.project_id
+      geotechnical_report_id:
+        path: node_outputs.geotechnical_analysis_node.report_id
+      foundation_research_report_id:
+        path: node_outputs.foundation_research_node.report_id
+      confirmed_document_ids:
+        path: node_outputs.validate_project_documents_node.validated_document_ids
+      document_id:
+        path: node_outputs.validate_project_documents_node.primary_document_id
+      snapshot_id:
+        path: node_outputs.validate_project_documents_node.snapshot_id
+      document_versions:
+        path: node_outputs.validate_project_documents_node.document_versions
+edges:
+  - from: validate_project_documents_node
+    to: geotechnical_analysis_node
+  - from: geotechnical_analysis_node
+    to: foundation_research_node
+  - from: foundation_research_node
+    to: requirement_agent_node

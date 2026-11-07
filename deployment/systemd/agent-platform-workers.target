@@ -1,0 +1,11 @@
+[Unit]
+Description=Agent Platform Temporal Workers Target
+Documentation=file:///opt/agent_platform/deployment/README.md
+After=network.target
+
+# Default deployment starts two Worker instances on boot
+Wants=agent-platform-worker@1.service agent-platform-worker@2.service
+
+[Install]
+WantedBy=multi-user.target
+
